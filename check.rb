@@ -5,5 +5,6 @@
     puts "OK"
   rescue
     puts "ERROR"
+    exit 1
   end
 end
