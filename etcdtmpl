@@ -7,22 +7,8 @@ require 'etcd'
 class EtcdTmpl
 
   def initialize
-    # check if we know ETCD_URL otherwise use a sane default
-    ENV['ETCD_URL'] ||= "etcd://127.0.0.1:4001/"
+    etcd_connect
 
-    # initialize ETCD client
-    (etcd_host, etcd_port) = ENV['ETCD_URL'].sub(/^etcd:\/\//, '').sub(/\/$/, '').split(':')
-    @etcd = Etcd.client(host: etcd_host, port: etcd_port)
-    
-    # connection check
-    begin
-      @etcd.leader
-    rescue
-      $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_URL']}"
-      exit 1
-    end
-
-    # define methods for namespaces
     @etcd.get.each do |ns|
       ns.gsub!(/\//, '')
       path.sub!(/^\//, '')
@@ -40,11 +26,24 @@ class EtcdTmpl
 
   alias_method :g, :global
 
-  # templater :)  
+  # templater :)
   def apply template
     puts ERB.new(template).result
-  end  
-    
+  end
+
+  def etcd_connect
+    ENV['ETCD_URL'] ||= "etcd://127.0.0.1:4001/"
+    (etcd_host, etcd_port) = ENV['ETCD_URL'].sub(/^etcd:\/\//, '').sub(/\/$/, '').split(':')
+    @etcd = Etcd.client(host: etcd_host, port: etcd_port)
+    begin
+      @etcd.leader
+    rescue
+      $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_URL']}"
+      exit! 1
+    end
+  end
+
+
 end
 
 EtcdTmpl.new.apply

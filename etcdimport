@@ -8,48 +8,47 @@ class EtcdImport
   def initialize
     (@yaml_filename, @tree_root) = ARGV
     @tree_root ||= ""
+    etcd_connect
+    read_config
+    import_structure @hash, @tree_root
+  end
 
-    # check if we know ETCD_URL otherwise use a sane default
-    ENV['ETCD_URL'] ||= "etcd://127.0.0.1:4001/"
+  def import_structure (hash, path="")
+    begin
+      hash.each do |k, v|
+        etcd_key = path + "/" + k.to_s
+        case v
+        when Hash
+          import_structure(v, etcd_key)
+        else
+          @etcd.set(etcd_key, value: v)
+          # puts etcd_key + ": " + v.to_json
+        end
+      end
+    rescue
+      $stderr.puts "Configuration import failed"
+      exit! 1
+    end
+  end
 
-    # initialize ETCD client
-    (etcd_host, etcd_port) = ENV['ETCD_URL'].sub(/^etcd:\/\//, '').sub(/\/$/, '').split(':')
-    @etcd = Etcd.client(host: etcd_host, port: etcd_port)
-
-    # read YAML file
+  def read_config
     begin
       @hash = YAML.load_file(@yaml_filename)
     rescue
       $stderr.puts "Couldn't parse YAML file definitions"
-      exit 1
+      exit! 1
     end
+  end
 
-    # ETCD connection check
+  def etcd_connect
+    ENV['ETCD_URL'] ||= "etcd://127.0.0.1:4001/"
+    (etcd_host, etcd_port) = ENV['ETCD_URL'].sub(/^etcd:\/\//, '').sub(/\/$/, '').split(':')
+    @etcd = Etcd.client(host: etcd_host, port: etcd_port)
     begin
       @etcd.leader
     rescue
       $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_URL']}"
-      # exit 1
-    end
-
-    begin
-      import_structure @hash, @tree_root
-    rescue
-      $stderr.puts "Configuration import failed"
-      exit 1
-    end
-  end
-
-  def import_structure (hash, path="")
-    hash.each do |k, v|
-      etcd_key = path + "/" + k.to_s
-      case v
-      when Hash
-        import_structure(v, etcd_key)
-      else
-        # @etcd.set(etcd_key, value: v.to_json)
-        puts etcd_key + ": " + v.to_json
-      end
+      exit! 1
     end
   end
 
