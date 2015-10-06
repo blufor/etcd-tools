@@ -7,7 +7,7 @@ require 'etcd'
 class EtcdTmpl
 
   def initialize
-    etcd_connect
+    @etcd = etcd_connect
 
     @etcd.get.each do |ns|
       ns.gsub!(/\//, '')
@@ -37,12 +37,12 @@ class EtcdTmpl
     @etcd = Etcd.client(host: etcd_host, port: etcd_port)
     begin
       @etcd.leader
+      return @etcd
     rescue
       $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_URL']}"
       exit! 1
     end
   end
-
 
 end
 

@@ -1,5 +1,5 @@
 check:
-	ruby check.rb
+	@ruby check.rb
 
 install:
 	/usr/bin/install -o root -g root -m 755 etcdimport /bin/
