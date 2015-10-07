@@ -77,7 +77,7 @@ nested:
   test2: [3,4]
 ```
 
-Now import the data with ```yaml2etcd -r /test < test.yaml```:
+Now import the data with ```yaml2etcd -v -r /test < test.yaml```:
 
 ```
 Connected to ETCD on 127.0.0.1:4001
