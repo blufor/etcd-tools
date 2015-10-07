@@ -65,7 +65,7 @@ class EtcdTmpl < ERB
     def connect (host, port)
       etcd = Etcd.client(host: host, port: port)
       begin
-        JSON.parse(etcd.version).map { |k, v| "#{k}: #{v}"}.join(' | ')
+        etcd.version
         return etcd
       rescue Exception => e
         $stderr.puts "Couldn't connect to etcd at #{host}:#{port}"

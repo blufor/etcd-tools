@@ -1,4 +1,4 @@
-["etcd", "erb", "yaml"].each do |lib|
+["etcd", "erb", "optparse", "yaml"].each do |lib|
   begin
     print "checking for #{lib} gem... "
     require lib

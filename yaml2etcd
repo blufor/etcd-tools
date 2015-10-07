@@ -8,7 +8,7 @@ class EtcdImport
 
   def initialize
     self.optparse
-    @etcd = self.class.connect(@options[:host], @options[:port])
+    @etcd = self.class.connect(@options[:host], @options[:port], @options[:verbose])
     @hash = self.class.read_config
     import_structure @hash, @options[:root_path]
   end
@@ -78,10 +78,11 @@ class EtcdImport
       end
     end
 
-    def connect (host, port)
+    def connect (host, port, verbose=false)
       etcd = Etcd.client(host: host, port: port)
       begin
-        JSON.parse(etcd.version).map { |k, v| "#{k}: #{v}"}.join(' | ')
+        etcd.version
+        puts "Connected to ETCD on #{host}:#{port}" if verbose
         return etcd
       rescue Exception => e
         $stderr.puts "Couldn't connect to etcd at #{host}:#{port}"
