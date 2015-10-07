@@ -5,7 +5,7 @@ require 'erb'
 require 'etcd'
 require 'optparse'
 
-class EtcdTmpl < ERB
+class EtcdERB < ERB
 
   attr_reader :etcd
 
@@ -84,4 +84,4 @@ class EtcdTmpl < ERB
 
 end
 
-EtcdTmpl.new
+EtcdERB.new
