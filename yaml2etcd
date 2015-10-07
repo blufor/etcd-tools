@@ -43,14 +43,12 @@ class EtcdImport
 
   def etcd_connect
     ENV['ETCD_HOST'] ||= "127.0.0.1"
-    host = ENV['ETCD_HOST'] || "127.0.0.1"
-    @etcd = Etcd.client(host: ENV['ETCD_HOST'], port: 4001)
-    @etcd.leader
+    etcd = Etcd.client(host: ENV['ETCD_HOST'], port: 4001)
     begin
-      @etcd.leader
-      return @etcd
+      etcd.leader
+      return etcd
     rescue
-      $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_URL']}"
+      $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_HOST']}:4001"
       exit! 1
     end
   end

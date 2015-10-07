@@ -1,0 +1,61 @@
+#!/usr/bin/ruby
+
+require 'yaml'
+require 'erb'
+require 'etcd'
+
+class EtcdTmpl < ERB
+
+  attr_reader :etcd
+
+  def initialize
+    if ARGV[0] =~ /^-?-h(elp|)$/
+      puts "Usage: \n\texport ETCD_HOST=1.2.3.4\n\t#{$0} < template.erb > outfile"
+      exit 0
+    end
+    @etcd = self.class.connect
+    super self.class.template
+  end
+
+  def result
+    super binding
+  end
+
+  def value path
+    return @etcd.get('/' + path.sub(/^\//, '')).value
+  end
+
+  def keys path
+    path.sub!(/^\//, '')
+    if @etcd.get('/' + path).directory?
+      return @etcd.get('/' + path).children.map { |key| key.key }
+    else
+      return []
+    end
+  end
+
+  class << self
+
+    def connect
+      ENV['ETCD_HOST'] ||= "127.0.0.1"
+      etcd = Etcd.client(host: ENV['ETCD_HOST'], port: 4001)
+      begin
+        etcd.leader
+        return etcd
+      rescue
+        $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_HOST']}:4001"
+        exit! 1
+      end
+    end
+
+    def template
+      ARGF.read
+    end
+
+  end
+
+
+end
+
+tmpl = EtcdTmpl.new
+puts tmpl.result
