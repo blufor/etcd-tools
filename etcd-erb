@@ -3,18 +3,44 @@
 require 'yaml'
 require 'erb'
 require 'etcd'
+require 'optparse'
 
 class EtcdTmpl < ERB
 
   attr_reader :etcd
 
   def initialize
-    if ARGV[0] =~ /^-?-h(elp|)$/
-      puts "Usage: \n\texport ETCD_HOST=1.2.3.4\n\t#{$0} < template.erb > outfile"
-      exit 0
-    end
-    @etcd = self.class.connect
+    self.optparse
+    @etcd = self.class.connect(@options[:host], @options[:port])
     super self.class.template
+  end
+
+  def optparse
+    @options = Hash.new
+
+    @options[:host] = ENV['ETCD_HOST']
+    @options[:port] = ENV['ETCD_PORT']
+
+    @options[:host] ||= "127.0.0.1"
+    @options[:port] ||= 4001
+
+    OptionParser.new do |opts|
+      opts.banner = "Applies variables from ETCD onto ERB template\n\nUsage: #{$0} [OPTIONS] < template.erb > outfile"
+      opts.separator ""
+      opts.separator "Connection options:"
+      opts.on("-s", "--host HOST", "hostname/IP of the ETCD service (ETCD_HOST envvar also applies) [DEFAULT: 127.0.0.1]") do |param|
+        @options[:host] = param
+      end
+      opts.on("-p", "--port PORT", "port of the ETCD service (ETCD_PORT envvar also applies) [DEFAULT: 4001]") do |param|
+        @options[:port] = param
+      end
+      opts.separator ""
+      opts.separator "Common options:"
+      opts.on_tail("-h", "--help", "show usage") do |param|
+        puts opts;
+        exit! 0
+      end
+    end.parse!
   end
 
   def result
@@ -36,14 +62,14 @@ class EtcdTmpl < ERB
 
   class << self
 
-    def connect
-      ENV['ETCD_HOST'] ||= "127.0.0.1"
-      etcd = Etcd.client(host: ENV['ETCD_HOST'], port: 4001)
+    def connect (host, port)
+      etcd = Etcd.client(host: host, port: port)
       begin
-        etcd.leader
+        JSON.parse(etcd.version).map { |k, v| "#{k}: #{v}"}.join(' | ')
         return etcd
-      rescue
-        $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_HOST']}:4001"
+      rescue Exception => e
+        $stderr.puts "Couldn't connect to etcd at #{host}:#{port}"
+        $stderr.puts e.message
         exit! 1
       end
     end
@@ -57,5 +83,4 @@ class EtcdTmpl < ERB
 
 end
 
-tmpl = EtcdTmpl.new
-puts tmpl.result
+puts EtcdTmpl.new.result

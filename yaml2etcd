@@ -2,15 +2,50 @@
 
 require 'yaml'
 require 'etcd'
+require 'optparse'
 
 class EtcdImport
 
   def initialize
-    (@yaml_filename, @tree_root) = ARGV
-    @tree_root ||= ""
-    @etcd = etcd_connect
-    @hash = read_config
-    import_structure @hash, @tree_root
+    self.optparse
+    @etcd = self.class.connect(@options[:host], @options[:port])
+    @hash = self.class.read_config
+    import_structure @hash, @options[:root_path]
+  end
+
+  def optparse
+    @options = Hash.new
+
+    @options[:host] = ENV['ETCD_HOST']
+    @options[:port] = ENV['ETCD_PORT']
+    @options[:root_path] = "/config"
+
+    @options[:host] ||= "127.0.0.1"
+    @options[:port] ||= 4001
+
+    OptionParser.new do |opts|
+      opts.banner = "Reads YAML file and imports the data into ETCD\n\nUsage: #{$0} [OPTIONS] < config.yaml"
+      opts.separator ""
+      opts.separator "Connection options:"
+      opts.on("-s", "--host HOST", "hostname/IP of the ETCD service (ETCD_HOST envvar also applies) [DEFAULT: 127.0.0.1]") do |param|
+        @options[:host] = param
+      end
+      opts.on("-p", "--port PORT", "port of the ETCD service (ETCD_PORT envvar also applies) [DEFAULT: 4001]") do |param|
+        @options[:port] = param
+      end
+      opts.separator ""
+      opts.separator "Common options:"
+      opts.on("-r", "--root-path PATH", "root PATH of ETCD tree to inject the data [DEFAULT: /config]") do |param|
+        @options[:root_path] = param
+      end
+      opts.on("-v", "--verbose", "run verbosely") do |param|
+        @options[:verbose] = param
+      end
+      opts.on_tail("-h", "--help", "show usage") do |param|
+        puts opts;
+        exit! 0
+      end
+    end.parse!
   end
 
   def import_structure (hash, path="")
@@ -22,7 +57,7 @@ class EtcdImport
           import_structure(v, etcd_key)
         else
           @etcd.set(etcd_key, value: v)
-          puts "SET: " + etcd_key + ": " + v.to_json
+          puts("SET: " + etcd_key + ": " + v.to_json) if @options[:verbose]
         end
       end
     rescue Exception => e
@@ -32,25 +67,29 @@ class EtcdImport
     end
   end
 
-  def read_config
-    begin
-      return YAML.load_file(@yaml_filename)
-    rescue
-      $stderr.puts "Couldn't parse YAML file definitions"
-      exit! 1
-    end
-  end
+  class << self
 
-  def etcd_connect
-    ENV['ETCD_HOST'] ||= "127.0.0.1"
-    etcd = Etcd.client(host: ENV['ETCD_HOST'], port: 4001)
-    begin
-      etcd.leader
-      return etcd
-    rescue
-      $stderr.puts "Couldn't connect to etcd at #{ENV['ETCD_HOST']}:4001"
-      exit! 1
+    def read_config
+      begin
+        return YAML.load(ARGF.read)
+      rescue
+        $stderr.puts "Couldn't parse YAML"
+        exit! 1
+      end
     end
+
+    def connect (host, port)
+      etcd = Etcd.client(host: host, port: port)
+      begin
+        JSON.parse(etcd.version).map { |k, v| "#{k}: #{v}"}.join(' | ')
+        return etcd
+      rescue Exception => e
+        $stderr.puts "Couldn't connect to etcd at #{host}:#{port}"
+        $stderr.puts e.message
+        exit! 1
+      end
+    end
+
   end
 
 end
