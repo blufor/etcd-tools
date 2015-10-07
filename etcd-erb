@@ -13,6 +13,7 @@ class EtcdTmpl < ERB
     self.optparse
     @etcd = self.class.connect(@options[:host], @options[:port])
     super self.class.template
+    puts self.result
   end
 
   def optparse
@@ -83,4 +84,4 @@ class EtcdTmpl < ERB
 
 end
 
-puts EtcdTmpl.new.result
+EtcdTmpl.new
