@@ -11,7 +11,7 @@ class EtcdERB < ERB
 
   def initialize
     self.optparse
-    @etcd = self.class.connect(@options[:host], @options[:port])
+    @etcd = self.class.connect(@options[:url])
     super self.class.template
     puts self.result
   end
@@ -19,21 +19,15 @@ class EtcdERB < ERB
   def optparse
     @options = Hash.new
 
-    @options[:host] = ENV['ETCD_HOST']
-    @options[:port] = ENV['ETCD_PORT']
-
-    @options[:host] ||= "127.0.0.1"
-    @options[:port] ||= 4001
+    @options[:url] = ENV['ETCDCTL_ENDPOINT']
+    @options[:url] ||= "http://127.0.0.1:4001"
 
     OptionParser.new do |opts|
       opts.banner = "Applies variables from ETCD onto ERB template\n\nUsage: #{$0} [OPTIONS] < template.erb > outfile"
       opts.separator ""
       opts.separator "Connection options:"
-      opts.on("-s", "--host HOST", "hostname/IP of the ETCD service (ETCD_HOST envvar also applies) [DEFAULT: 127.0.0.1]") do |param|
-        @options[:host] = param
-      end
-      opts.on("-p", "--port PORT", "port of the ETCD service (ETCD_PORT envvar also applies) [DEFAULT: 4001]") do |param|
-        @options[:port] = param
+      opts.on("-u", "--url URL", "URL endpoint of the ETCD service (ETCDCTL_ENDPOINT envvar also applies) [DEFAULT: http://127.0.0.1:4001]") do |param|
+        @options[:url] = param
       end
       opts.separator ""
       opts.separator "Common options:"
@@ -63,7 +57,8 @@ class EtcdERB < ERB
 
   class << self
 
-    def connect (host, port)
+    def connect (url)
+      (host, port) = url.gsub(/^https?:\/\//, '').gsub(/\/$/, '').split(':')
       etcd = Etcd.client(host: host, port: port)
       begin
         etcd.version

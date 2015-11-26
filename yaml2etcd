@@ -8,7 +8,7 @@ class Yaml2Etcd
 
   def initialize
     self.optparse
-    @etcd = self.class.connect(@options[:host], @options[:port], @options[:verbose])
+    @etcd = self.class.connect(@options[:url], @options[:verbose])
     @hash = self.class.read_config
     import_structure @hash, @options[:root_path]
   end
@@ -16,22 +16,17 @@ class Yaml2Etcd
   def optparse
     @options = Hash.new
 
-    @options[:host] = ENV['ETCD_HOST']
-    @options[:port] = ENV['ETCD_PORT']
+    @options[:url] = ENV['ETCDCTL_ENDPOINT']
+    @options[:url] ||= "http://127.0.0.1:4001"
     @options[:root_path] = "/config"
 
-    @options[:host] ||= "127.0.0.1"
-    @options[:port] ||= 4001
 
     OptionParser.new do |opts|
       opts.banner = "Reads YAML file and imports the data into ETCD\n\nUsage: #{$0} [OPTIONS] < config.yaml"
       opts.separator ""
       opts.separator "Connection options:"
-      opts.on("-s", "--host HOST", "hostname/IP of the ETCD service (ETCD_HOST envvar also applies) [DEFAULT: 127.0.0.1]") do |param|
-        @options[:host] = param
-      end
-      opts.on("-p", "--port PORT", "port of the ETCD service (ETCD_PORT envvar also applies) [DEFAULT: 4001]") do |param|
-        @options[:port] = param
+      opts.on("-u", "--url HOST", "URL endpoint of the ETCD service (ETCDCTL_ENDPOINT envvar also applies) [DEFAULT: http://127.0.0.1:4001]") do |param|
+        @options[:url] = param
       end
       opts.separator ""
       opts.separator "Common options:"
@@ -78,7 +73,8 @@ class Yaml2Etcd
       end
     end
 
-    def connect (host, port, verbose=false)
+    def connect (url, verbose=false)
+      (host, port) = url.gsub(/^https?:\/\//, '').gsub(/\/$/, '').split(':')
       etcd = Etcd.client(host: host, port: port)
       begin
         etcd.version

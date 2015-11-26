@@ -11,11 +11,12 @@ additional tools for easier ETCD administration
 ### etcd-erb
 
 ```
-Usage: /bin/etcd-erb [OPTIONS] < template.erb > outfile
+Applies variables from ETCD onto ERB template
+
+Usage: ./etcd-erb [OPTIONS] < template.erb > outfile
 
 Connection options:
-    -s, --host HOST                  hostname/IP of the ETCD service (ETCD_HOST envvar also applies) [DEFAULT: 127.0.0.1]
-    -p, --port PORT                  port of the ETCD service (ETCD_PORT envvar also applies) [DEFAULT: 4001]
+    -u, --url URL                    URL endpoint of the ETCD service (ETCDCTL_ENDPOINT envvar also applies) [DEFAULT: http://127.0.0.1:4001]
 
 Common options:
     -h, --help                       show usage
@@ -55,11 +56,12 @@ true
 
 ### yaml2etcd
 ```
-Usage: /bin/yaml2etcd [OPTIONS] < config.yaml
+Reads YAML file and imports the data into ETCD
+
+Usage: ./yaml2etcd [OPTIONS] < config.yaml
 
 Connection options:
-    -s, --host HOST                  hostname/IP of the ETCD service (ETCD_HOST envvar also applies) [DEFAULT: 127.0.0.1]
-    -p, --port PORT                  port of the ETCD service (ETCD_PORT envvar also applies) [DEFAULT: 4001]
+    -u, --url HOST                   URL endpoint of the ETCD service (ETCDCTL_ENDPOINT envvar also applies) [DEFAULT: http://127.0.0.1:4001]
 
 Common options:
     -r, --root-path PATH             root PATH of ETCD tree to inject the data [DEFAULT: /config]
