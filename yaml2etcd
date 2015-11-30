@@ -18,7 +18,7 @@ class Yaml2Etcd
 
     @options[:url] = ENV['ETCDCTL_ENDPOINT']
     @options[:url] ||= "http://127.0.0.1:4001"
-    @options[:root_path] = "/config"
+    @options[:root_path] = ""
 
 
     OptionParser.new do |opts|
