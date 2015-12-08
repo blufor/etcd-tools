@@ -1,0 +1,4 @@
+---
+floating_ip: 10.4.0.5/24
+interface: vlan3
+etcd_endpoint: http://127.0.0.1:4001

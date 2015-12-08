@@ -1,0 +1,89 @@
+#!/usr/bin/ruby
+
+require 'mkmf'
+require 'ipaddr'
+require 'timeout'
+require 'net/ping'
+
+require 'yaml'
+require 'etcd'
+
+require 'optparse'
+
+class EtcdIPWatchdog
+
+  attr_reader :etcd
+
+  def initialize
+    self.optparse
+    @etcd = self.class.connect(@options[:url])
+
+    @arping_bin = find_executable 'arping'
+    if @arping_bin == nil then
+      $stderr.puts "Couldn't find arping binary! Is it installed in your PATH?"
+      exit! 1
+    end
+    begin
+      @config = YAML.load_file('/etc/etcd-ip-watchdog.yaml')
+    rescue
+      @config = YAML.load_file('./etcd-ip-watchdog.yaml')
+    rescue
+      @config = {
+        etcd_endpoint: 'http://127.0.0.1:4001',
+        interface: 'eth0',
+
+      }
+
+  end
+
+
+  def run_setter
+    Thread.new do
+      loop do
+        #code
+      end
+    end
+  end
+
+  def run_pinger
+    Thread.new do
+      loop do
+        #code
+      end
+    end
+  end
+
+  def run_etcd_watch
+    Thread.new do
+      loop do
+        #code
+      end
+    end
+  end
+
+
+  class << self
+
+    def connect (url)
+      (host, port) = url.gsub(/^https?:\/\//, '').gsub(/\/$/, '').split(':')
+      etcd = Etcd.client(host: host, port: port)
+      begin
+        etcd.leader
+        return etcd
+      rescue Exception => e
+        $stderr.puts "Couldn't connect to etcd at #{host}:#{port}"
+        $stderr.puts e.message
+        exit! 1
+      end
+    end
+
+    def template
+      ARGF.read
+    end
+
+  end
+
+
+end
+
+app = EtcdERB.new
