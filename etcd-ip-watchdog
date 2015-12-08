@@ -4,25 +4,13 @@ require 'mkmf'
 require 'ipaddr'
 require 'timeout'
 require 'net/ping'
-
 require 'yaml'
 require 'etcd'
 
-require 'optparse'
-
 class EtcdIPWatchdog
 
-  attr_reader :etcd
-
   def initialize
-    self.optparse
-    @etcd = self.class.connect(@options[:url])
-
-    @arping_bin = find_executable 'arping'
-    if @arping_bin == nil then
-      $stderr.puts "Couldn't find arping binary! Is it installed in your PATH?"
-      exit! 1
-    end
+    # read config file
     begin
       @config = YAML.load_file('/etc/etcd-ip-watchdog.yaml')
     rescue
@@ -31,16 +19,31 @@ class EtcdIPWatchdog
       @config = {
         etcd_endpoint: 'http://127.0.0.1:4001',
         interface: 'eth0',
-
+        vip: '192.168.0.168/24',
       }
+    end
 
+    # `arping` command
+    @arping_bin = find_executable 'arping'
+    if @arping_bin == nil then
+      $stderr.puts "Couldn't find arping binary! Is it installed in your PATH?"
+      exit! 1
+    end
+
+    # `ip` command
+    @iproute_bin = find_executable 'ip'
+    if @iproute_bin == nil then
+      $stedd.puts "Coudn't find iproute2 binary! Is it installed in your PATH?"
+      exit! 1
+    end
+
+    @etcd = self.class.etcd_connect(@config[:etcd_endpoint])
   end
-
 
   def run_setter
     Thread.new do
       loop do
-        #code
+        # TODO
       end
     end
   end
@@ -48,7 +51,7 @@ class EtcdIPWatchdog
   def run_pinger
     Thread.new do
       loop do
-        #code
+        # TODO
       end
     end
   end
@@ -56,7 +59,7 @@ class EtcdIPWatchdog
   def run_etcd_watch
     Thread.new do
       loop do
-        #code
+        # TODO
       end
     end
   end
@@ -64,11 +67,11 @@ class EtcdIPWatchdog
 
   class << self
 
-    def connect (url)
+    def etcd_connect (url)
       (host, port) = url.gsub(/^https?:\/\//, '').gsub(/\/$/, '').split(':')
       etcd = Etcd.client(host: host, port: port)
       begin
-        etcd.leader
+        JSON.parse(etcd.version)
         return etcd
       rescue Exception => e
         $stderr.puts "Couldn't connect to etcd at #{host}:#{port}"
@@ -77,12 +80,46 @@ class EtcdIPWatchdog
       end
     end
 
-    def template
-      ARGF.read
+    def etcd_watch (*args)
+      args[:etcd].watch
+    end
+
+    def etcd_master? (*args)
+      # TODO
+    end
+
+    def vip_handle! (*args)
+      cmd = [ args[:iproute_bin], 'address', '', args[:vip]+'/'+args[:prefix], 'dev', args[:interfaces] ]
+
+      case args[:action]
+      when 'leader'
+        cmd[2] = 'add'
+
+      when 'follower'
+        cmd[3] = 'delete'
+      end
+      # TODO
+    end
+
+    def vip_alive? (*args)
+      icmp = Net::Ping::ICMP.new(args[:ip])
+      args[:retry] ||= 3
+      (1..args[:retry]).each do
+        icmp.ping && return true
+      end
+    end
+
+    def vip_dup? (*args)
+      cmd = [ args[:arping_bin], '-D', '-c1', '-w5', '-I', args[:interface], args[:vip] ]
+      system(cmd) ? return false : return true
+    end
+
+    def vip_update! (*args)
+      cmd = [ args[:arping_bin], '-U', '-c3', '-I', args[:interface], args[:vip] ]
+      system(cmd)
     end
 
   end
-
 
 end
 
