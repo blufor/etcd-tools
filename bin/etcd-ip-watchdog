@@ -7,6 +7,7 @@ require 'net/ping'
 require 'yaml'
 require 'json'
 require 'etcd'
+require 'time'
 
 ### EXTENDS ####
 
@@ -37,6 +38,7 @@ class EtcdIPWatchdog
   def initialize
     # default config variables
     @config = {
+      debug: false,
       parameters: {
         etcd_endpoint: 'http://127.0.0.1:4001',
         interface: 'eth0',
@@ -54,30 +56,27 @@ class EtcdIPWatchdog
     }
 
     # read config file
-    begin
+    if File.exists? '/etc/etcd-ip-watchdog.yaml'
       @config = @config.deep_merge YAML.load_file('/etc/etcd-ip-watchdog.yaml')
-      log 'loaded config from /etc/etcd-ip-watchdog.yaml'
-    rescue
+      info 'loaded config from /etc/etcd-ip-watchdog.yaml'
+    elsif File.exists? './etcd-ip-watchdog.yaml'
       @config = @config.deep_merge YAML.load_file('./etcd-ip-watchdog.yaml')
-      log 'loaded config from ./etcd-ip-watchdog.yaml'
-    rescue
-      log 'no config file found, using defaults'
+      info 'loaded config from ./etcd-ip-watchdog.yaml'
+    else
+      info 'no config file loaded, using defaults'
     end
 
     # connect to ETCD
     @etcd = etcd_connect
 
-    if @etcd.healthy?
-      log "ETCD cluster status: healthy"
-    else
-      log "ETCD cluster status: sick"
-    end
+  end
 
-    if leader?
-      log "ETCD member state: leader"
-    else
-      log "ETCD member state: follower"
-    end
+  def run
+    debug "VIP alive? #{self.vip_alive?}"
+    debug "VIP duplicate? #{self.vip_dup?}"
+    debug "ETCD leader? #{self.leader?}"
+    debug "#{self.vip_handle! self.leader?}"
+    debug "#{self.vip_update_arp!}"
   end
 
   # def run_setter
@@ -120,12 +119,16 @@ class EtcdIPWatchdog
     @hostname ||= Socket.gethostname
   end
 
-  def log message
-    $stdout.puts '[' + caller.reverse.drop(2).map{ |func| func.sub(/^.*\`([<>a-zA-Z0-9_\ ]+)\'$/, '\\1').to_s }.join('::') + ']: ' + message
+  def info message
+    $stdout.puts(Time.now.to_s + ' INFO:  [' + caller.reverse.last.sub(/^.*\`([<>a-zA-Z0-9_\ \?\!]+)\'$/, '\\1').to_s + ']: ' + message.to_s)
   end
 
   def err message
-    $stderr.puts caller.last.to_s + ": " + message
+    $stdout.puts(Time.now.to_s + ' ERROR: [' + caller.reverse.last.sub(/^.*\`([<>a-zA-Z0-9_\ \?\!]+)\'$/, '\\1').to_s + ']: ' + message.to_s)
+  end
+
+  def debug message
+    $stderr.puts(Time.now.to_s + ' DEBUG: [' + caller.reverse.map{ |func| func.sub(/^.*\`([<>a-zA-Z0-9_\ \?\!]+)\'$/, '\\1').to_s }.join('::') + ']: ' + message.to_s) if @config[:debug]
   end
 
   def etcd_connect
@@ -133,12 +136,13 @@ class EtcdIPWatchdog
     etcd = Etcd.client(host: host, port: port)
     begin
       versions = JSON.parse(etcd.version)
-      log "conncted to ETCD at #{@config[:parameters][:etcd_endpoint]}"
-      log "server version: #{versions['etcdserver']}"
-      log "cluster version: #{versions['etcdcluster']}"
+      info "conncted to ETCD at #{@config[:parameters][:etcd_endpoint]}"
+      info "server version: #{versions['etcdserver']}"
+      info "cluster version: #{versions['etcdcluster']}"
+      info "healthy: #{etcd.healthy?}"
       return etcd
     rescue Exception => e
-      err "E: couldn't connect to etcd at #{host}:#{port}"
+      err "couldn't connect to etcd at #{host}:#{port}"
       err e.message
       exit! 1
     end
@@ -158,51 +162,83 @@ class EtcdIPWatchdog
 
 
   # add or remove VIP on interface
-  #
-  def vip_handle! (action)
+  # <IMPLEMENTED>
+  def vip_handle! (leader)
+    ip = IPAddr.new(@config[:parameters][:vip])
+    mask = @config[:parameters][:mask]
     cmd = [ self.iproute,
             'address',
             '',
-            @config[:parameters][:vip],
+            "#{ip}/#{mask}",
             'dev',
             @config[:parameters][:interface],
             'label',
-            @config[:parameters][:interface] + '-vip'
+            @config[:parameters][:interface] + '-vip',
+            '>/dev/null 2>&1'
           ]
-
-    case action
-    when :leader
+    case leader
+    when true
       cmd[2] = 'add'
-    when :follower
+    when false
       cmd[2] = 'delete'
     end
-
-    system(*cmd)
+    debug "running: #{cmd.join(' ')}"
+    if system(cmd.join(' '))
+      info "IP '#{cmd[2]}' operation done"
+    else
+      err "IP '#{cmd[2]}' operation failed"
+    end
   end
 
   # check reachability of VIP by ICMP echo
   #
   def vip_alive?
+    return @alive ||= false
     icmp = Net::Ping::ICMP.new(@config[:parameters][:vip])
     (1..@config[:parameters][:icmp_count]).each do
-      icmp.ping and return true
+      ( @alive = true; return @alive ) if icmp.ping
     end
-    return false
+    return @alive
   end
 
   # check whether the IP is registered anywhere
   #
   def vip_dup?
-    log system(self.arp, '-d', @config[:parameters][:vip])
-    log system(self.arping, '-D', '-c1', '-w5', '-I', @config[:parameters][:interface], @config[:parameters][:vip]) ? false : true
+    cmd_arp = [ self.arp, '-d', @config[:parameters][:vip] ]
+    cmd_arping = [  self.arping, '-D',
+                    '-c', @config[:parameters][:arping_count],
+                    '-w', @config[:parameters][:arping_wait],
+                    '-I', @config[:parameters][:interface],
+                    @config[:parameters][:vip], '>/dev/null 2>&1' ]
+    debug "running: #{cmd_arp.join(' ')}"
+    system(*cmd_arp)
+    debug "running: #{cmd_arping.join(' ')}"
+    if system(cmd_arping.join(' '))
+      info 'desired VIP is unallocated'
+      return false
+    else
+      err 'desired VIP is still allocated, doing nothing'
+      return true
+    end
   end
 
   # send gratuitous ARP to the network
   #
-  def vip_update!
-    system( self.arping, '-U', '-c3', '-I', @config[:parameters][:interface], @config[:parameters][:vip] )
+  def vip_update_arp!
+    cmd = [ self.arping, '-U',
+            '-c', @config[:parameters][:arping_count],
+            '-I', @config[:parameters][:interface],
+            @config[:parameters][:vip], '>/dev/null 2>&1' ]
+    debug "running: #{cmd.join(' ')}"
+    if system(cmd.join(' '))
+      info 'gratuitous ARP packet sent'
+      return true
+    else
+      err 'gratuitous ARP packet failed to send'
+      return false
+    end
   end
 
 end
 
-app = EtcdIPWatchdog.new
+EtcdIPWatchdog.new.run

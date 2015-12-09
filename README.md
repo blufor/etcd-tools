@@ -87,3 +87,5 @@ SET: /test/plain: true
 SET: /test/nested/test1: [1,2]
 SET: /test/nested/test2: [3,4]
 ```
+
+### etcd-ip-watchdog
