@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require 'etcd-tools/etcd_watchdog_haproxy'
+app = EtcdTools::Watchdog::HAproxy.new
+app.run

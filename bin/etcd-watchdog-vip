@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require 'etcd-tools/etcd_watchdog_vip'
+app = EtcdTools::VipWatchdog.new
+app.run

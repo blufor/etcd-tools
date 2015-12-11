@@ -3,8 +3,8 @@ additional tools for easier ETCD administration
 
 ## Installation
 
-1. ```make check``` - check availability of required ruby gems
-2. ```sudo make install``` - install the tools
+```gem install etcd-tools --no-rdoc --no-ri```
+
 
 ## Tools description
 
