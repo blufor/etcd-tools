@@ -20,7 +20,7 @@ module EtcdTools
       @status_etcd = false
       @status_icmp = false
       @thread.each_value(&:run)
-      # sleep 5
+      sleep @config[:parameters][:interval]
       first_cycle = true
       while !@exit do
         status_etcd = status_icmp = false # FIXME: introduce CVs...
