@@ -88,9 +88,9 @@ module EtcdTools
         system(cmd_arp.join(' '))
         debug "CMD #{cmd_arping.join(' ')}"
         if system(cmd_arping.join(' '))
-          return true
-        else
           return false
+        else
+          return true
         end
       end
     end
