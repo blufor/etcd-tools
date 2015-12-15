@@ -1,7 +1,13 @@
 module EtcdTools
   module Watchdog
     module HAproxy
-      # TODO
+
+      def generate_config
+      end
+
+      def reload_haproxy
+      end
+
     end
   end
 end

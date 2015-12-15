@@ -1,3 +1,3 @@
 #!/usr/bin/env ruby
 require 'etcd-tools/etcd_erb'
-EtcdTools::EtcdERB.new
+EtcdTools::Cli::EtcdERB.new

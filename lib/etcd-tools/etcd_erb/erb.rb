@@ -1,6 +1,9 @@
 module EtcdTools
   module EtcdERB
-    module Erb
+    class Erb
+
+
+
       def result
         super binding
       end

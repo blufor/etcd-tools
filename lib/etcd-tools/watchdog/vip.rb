@@ -16,17 +16,12 @@ module EtcdTools
                 @config[:parameters][:interface] + '-vip',
                 '>/dev/null 2>&1'
               ]
-        case leader
-        when true
-          cmd[2] = 'add'
-        when false
-          cmd[2] = 'delete'
-        end
-        debug "CMD #{cmd.join(' ')}"
+        leader ? cmd[2] = 'add' : cmd[2] = 'delete'
+        debug "<shell> #{cmd.join(' ')}"
         if system(cmd.join(' '))
-          info "IP '#{cmd[2]}' operation done"
+          return true
         else
-          err "IP '#{cmd[2]}' operation failed"
+          return false
         end
       end
 
@@ -37,12 +32,10 @@ module EtcdTools
                 '-c', @config[:parameters][:arping_count],
                 '-I', @config[:parameters][:interface],
                 @config[:parameters][:vip] ]
-        debug "CMD #{cmd.join(' ')}"
+        debug "<shell> #{cmd.join(' ')}"
         if system(cmd.join(' '))
-          info 'gratuitous ARP packet sent'
           return true
         else
-          err 'gratuitous ARP packet failed to send'
           return false
         end
       end
@@ -60,7 +53,7 @@ module EtcdTools
                 '-q',
                 "#{@config[:parameters][:interface]}-vip"
               ]
-        debug "CMD #{cmd.join(' ')}"
+        debug "<shell> #{cmd.join(' ')}"
         if system(cmd.join(' '))
           return true
         else
@@ -84,9 +77,9 @@ module EtcdTools
                         '-w', @config[:parameters][:arping_wait],
                         '-I', @config[:parameters][:interface],
                         @config[:parameters][:vip] ]
-        debug "CMD #{cmd_arp.join(' ')}"
+        debug "<shell> #{cmd_arp.join(' ')}"
         system(cmd_arp.join(' '))
-        debug "CMD #{cmd_arping.join(' ')}"
+        debug "<shell> #{cmd_arping.join(' ')}"
         if system(cmd_arping.join(' '))
           return false
         else

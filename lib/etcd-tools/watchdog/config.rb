@@ -24,12 +24,12 @@ module EtcdTools
         cfg = default_config
         if File.exist? '/etc/etcd-watchdog.yaml'
           cfg = cfg.deep_merge YAML.load_file('/etc/etcd-watchdog.yaml')
-          info '<main> loaded config from /etc/etcd-watchdog.yaml'
+          puts 'loaded config from /etc/etcd-watchdog.yaml'
         elsif File.exist? './etcd-watchdog.yaml'
           cfg = cfg.deep_merge YAML.load_file('./etcd-watchdog.yaml')
-          info '<main> loaded config from ./etcd-watchdog.yaml'
+          puts 'loaded config from ./etcd-watchdog.yaml'
         else
-          info '<main> no config file loaded, using defaults'
+          puts 'no config file loaded, using defaults'
         end
         cfg
       end

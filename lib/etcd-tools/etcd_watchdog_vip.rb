@@ -12,10 +12,15 @@ module EtcdTools
 
     def run
       if Process.euid != 0
-        err 'Must run under root user!'
+        $stderr.puts 'Must run under root user!'
         exit! 1
       end
-      @semaphore.merge!({ icmp: Mutex.new })
+      setup
+      @semaphore = {
+        log: Mutex.new,
+        etcd: Mutex.new,
+        icmp: Mutex.new
+      }
       @thread = { icmp: thread_icmp, etcd: thread_etcd }
       @status_etcd = false
       @status_icmp = false

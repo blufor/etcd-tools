@@ -22,26 +22,24 @@ module EtcdTools
       include EtcdTools::Watchdog::Threads
 
       def initialize
-        @semaphore = {
-          log: Mutex.new,
-          etcd: Mutex.new
-        }
         @config = { debug: false }
         @config = config
         @exit = false
-        # handle various signals
         @exit_sigs = ['INT', 'TERM']
         @exit_sigs.each { |sig| Signal.trap(sig) { @exit = true } }
         Signal.trap('USR1') { @config[:debug] = false }
         Signal.trap('USR2') { @config[:debug] = true }
-        Signal.trap('HUP') { @config = config }
+        Signal.trap('HUP')  { @config = config }
+      end
+
+      def setup(proc_name, nice = -20)
         if RUBY_VERSION >= '2.1'
-          Process.setproctitle('etcd-vip-watchdog')
+          Process.setproctitle(proc_name)
         else
-          $0 = 'etcd-vip-watchdog'
+          $0 = proc_name
         end
-        # Process.setpriority(Process::PRIO_PROCESS, 0, -20)
-        # Process.daemon
+        Process.setpriority(Process::PRIO_PROCESS, 0, nice)
+        # TODO: Process.daemon ...
       end
     end
   end

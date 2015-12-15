@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 
-require 'net/ping'
+require 'etcd-tools/watchdog/init'
+require 'etcd-tools/watchdog/haproxy'
+require 'etcd-tools/watchdog/threads/haproxy'
+require 'etcd-tools/etcd_erb/erb'
 
 module EtcdTools
   module Watchdog
@@ -9,10 +12,7 @@ module EtcdTools
       include EtcdTools::Watchdog::HAproxy
 
       def run
-        @thread = {
-          etcd: thread_etcd
-        }
-        @status_etcd = false
+        while @etcd.watch(@config[:haproxy_cfg])
       end
 
     end
