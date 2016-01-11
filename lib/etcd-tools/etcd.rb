@@ -18,8 +18,7 @@ module EtcdTools
       begin
         hash.each do |key, value|
           etcd_key = path + "/" + key.to_s
-          case value
-          when Hash
+          if value === Hash
             hash2etcd(value, etcd_key)
           else
             etcd.set(etcd_key, value: value)
@@ -32,19 +31,18 @@ module EtcdTools
 
     def etcd2hash (etcd, path="")
       begin
-        hash = Hash.new
+        h = {}
         etcd.get(path).children.each do |child|
           if etcd.get(child.key).directory?
-            hash[child.key.split('/').last.to_sym] = etcd2hash etcd, child.key
+            h[child.key.split('/').last.to_s] = etcd2hash etcd, child.key
           else
-            hash[child.key.split('/').last.to_sym] = child.value
+            h[child.key.split('/').last.to_s] = child.value
           end
         end
-      rescue
+        return Hash[h.sort]
+      rescue Exception => e
         return nil
       end
-      return hash.sort.to_h
     end
-
   end
 end

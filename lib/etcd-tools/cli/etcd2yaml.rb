@@ -49,7 +49,7 @@ module EtcdTools
 
         begin
           hash = etcd2hash @etcd, @options[:root_path]
-          puts hash.to_yaml
+          puts YAML.dump hash
         rescue Exception => e
           $stderr.puts "Import failed"
           $stderr.puts e.message
