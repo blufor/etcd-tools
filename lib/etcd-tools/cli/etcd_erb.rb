@@ -1,8 +1,12 @@
 require 'optparse'
+require 'etcd-tools/etcd'
+require 'etcd-tools/erb'
 
 module EtcdTools
-  module EtcdERB
-    module Options
+  module Cli
+    class EtcdERB
+      include EtcdTools::Etcd
+
       def optparse
         @options = Hash.new
 
@@ -23,6 +27,27 @@ module EtcdTools
             exit! 0
           end
         end.parse!
+      end
+
+      def initialize
+        self.optparse
+
+        begin
+          @etcd = etcd_connect @options[:url]
+        rescue Exception => e
+          $stderr.puts "Failed to connect to ETCD!"
+          $stderr.puts e.message
+          exit! 1
+        end
+
+        begin
+          template = EtcdTools::Erb.new @etcd, ARGF.read
+          puts template.result
+        rescue Exception => e
+          $stderr.puts "Failed to parse ERB template!"
+          $stderr.puts e.message
+          exit! 1
+        end
       end
     end
   end

@@ -1,24 +1,21 @@
-require 'ipaddr'
 require 'timeout'
-require 'yaml'
 require 'json'
 require 'time'
-require 'etcd'
 require 'etcd-tools/mixins'
-require 'etcd-tools/watchdog/config'
-require 'etcd-tools/watchdog/logger'
-require 'etcd-tools/watchdog/helpers'
-require 'etcd-tools/watchdog/etcd'
+require 'etcd-tools/watchdog/util/config'
+require 'etcd-tools/watchdog/util/logger'
+require 'etcd-tools/watchdog/util/helpers'
+require 'etcd-tools/watchdog/util/etcd'
 require 'etcd-tools/watchdog/threads/etcd'
 
 module EtcdTools
   module Watchdog
     class Init
 
-      include EtcdTools::Watchdog::Config
-      include EtcdTools::Watchdog::Logger
-      include EtcdTools::Watchdog::Helpers
-      include EtcdTools::Watchdog::Etcd
+      include EtcdTools::Watchdog::Util::Config
+      include EtcdTools::Watchdog::Util::Logger
+      include EtcdTools::Watchdog::Util::Helpers
+      include EtcdTools::Watchdog::Util::Etcd
       include EtcdTools::Watchdog::Threads
 
       def initialize

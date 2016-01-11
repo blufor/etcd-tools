@@ -1,3 +1,5 @@
+require 'net/ping'
+
 module EtcdTools
   module Watchdog
     module Threads

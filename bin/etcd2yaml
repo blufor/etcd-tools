@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+require 'etcd-tools/cli/etcd2yaml'
+EtcdTools::Cli::Etcd2Yaml.new
