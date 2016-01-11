@@ -7,7 +7,10 @@ module EtcdTools
 
     attr_reader :etcd
 
-    def initialize (etcd, template)
+    def initialize (etcd, template, requires=['yaml'])
+      requires.each do |r|
+        require r
+      end
       @etcd = etcd
       super template
     end
@@ -30,7 +33,7 @@ module EtcdTools
     end
 
     def members
-      @etcd.members
+      Hash[ @etcd.members.map { |id, md| [ id, md.merge({ "ip" => md["clientURLs"].first.sub(/https?:\/\//, '').sub(/:[0-9]+/, '') }) ] } ]
     end
 
   end
