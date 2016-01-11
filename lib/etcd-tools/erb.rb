@@ -3,11 +3,12 @@ require 'etcd-tools/etcd'
 
 module EtcdTools
   class Erb < ::ERB
+
     include EtcdTools::Etcd
 
     attr_reader :etcd
 
-    def initialize (etcd, template, requires=['yaml'])
+    def initialize (etcd, template, requires=['yaml', 'json', 'time'])
       @safe_level = nil
       requires.each do |r|
         require r
@@ -34,6 +35,14 @@ module EtcdTools
         return @etcd.get('/' + path).children.map { |key| key.key }
       else
         return []
+      end
+    end
+
+    def hash path
+      begin
+        etcd2hash @etcd, path
+      rescue
+        {}
       end
     end
 
