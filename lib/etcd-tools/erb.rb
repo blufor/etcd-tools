@@ -8,11 +8,16 @@ module EtcdTools
     attr_reader :etcd
 
     def initialize (etcd, template, requires=['yaml'])
+      @safe_level = nil
       requires.each do |r|
         require r
       end
       @etcd = etcd
-      super template
+      compiler = ::ERB::Compiler.new('-')
+      set_eoutvar(compiler, "_erbout")
+      @src, @enc = *compiler.compile(template)
+      @filename = nil
+      # super template
     end
 
     def result

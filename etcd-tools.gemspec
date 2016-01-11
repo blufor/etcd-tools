@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name                  = 'etcd-tools'
-  s.version               = '0.2.2'
+  s.version               = '0.2.3'
   s.date                  = '2015-12-11'
   s.summary               = "ETCD tools"
   s.description           = "A set of handful daemons and command-line utils for ETCD (is part of PortAuthority)"
