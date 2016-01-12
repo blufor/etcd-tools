@@ -11,7 +11,7 @@ module EtcdTools
           $stderr.puts 'Must run under root user!'
           exit! 1
         end
-        setup
+        setup 'etcd-vip-watchdog'
         @semaphore = {
           log: Mutex.new,
           etcd: Mutex.new,

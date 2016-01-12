@@ -1,0 +1,5 @@
+<%# TODO : generate from etcd-tools members() function %>
+<% members.each do |id, params| -%>
+<%= params["ip"] %> rabbit-<%= params["name"] %>
+<% end -%>
+
