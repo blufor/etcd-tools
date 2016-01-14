@@ -1,4 +1,5 @@
 require 'optparse'
+require 'yaml'
 require 'etcd-tools/etcd'
 
 module EtcdTools
