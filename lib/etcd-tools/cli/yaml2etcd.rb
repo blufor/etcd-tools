@@ -56,7 +56,7 @@ module EtcdTools
         end
 
         begin
-          hash2etcd @hash, @options[:root_path]
+          hash2etcd @etcd, @hash, @options[:root_path]
           puts "OK"
         rescue Exception => e
           $stderr.puts "Import failed"
