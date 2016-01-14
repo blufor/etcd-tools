@@ -17,9 +17,10 @@ module EtcdTools
     def hash2etcd (etcd, hash, path="")
       begin
         hash.each do |key, value|
-          etcd_key = path + "/" + key.to_s
-          if value === Hash
-            hash2etcd(value, etcd_key)
+          path = "" if path == '/'
+          etcd_key = path + '/' + key.to_s
+          if value.class == Hash
+            hash2etcd(etcd, value, etcd_key)
           else
             etcd.set(etcd_key, value: value)
           end
