@@ -40,7 +40,7 @@ module EtcdTools
 
         begin
           @hash = YAML.load ARGF.read
-        rescue
+        rescue Exception => e
           $stderr.puts "Failed to parse YAML!"
           $stderr.puts e.message
           exit! 1

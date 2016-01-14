@@ -1,0 +1,6 @@
+<% m = members -%>
+<% first = m.shift[1] -%>
+  server <%= first["name"] %> <%= first["ip"] %>:6672 check port 6672 fall 2 inter 1s
+<% m.each do |id, params| -%>
+  server <%= params["name"] %> <%= params["ip"] %>:6672 backup check port 6672 fall 2 inter 1s
+<% end -%>
