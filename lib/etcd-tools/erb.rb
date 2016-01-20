@@ -15,10 +15,9 @@ module EtcdTools
       end
       @etcd = etcd
       compiler = ::ERB::Compiler.new('-')
-      set_eoutvar(compiler, "_erbout")
+      set_eoutvar(compiler, '_erbout')
       @src, @enc = *compiler.compile(template)
       @filename = nil
-      # super template
     end
 
     def result
@@ -26,7 +25,7 @@ module EtcdTools
     end
 
     def value path
-      return @etcd.get('/' + path.sub(/^\//, '')).value
+      @etcd.get('/' + path.sub(/^\//, '')).value
     end
 
     def keys path
@@ -39,15 +38,13 @@ module EtcdTools
     end
 
     def hash path
-      begin
-        etcd2hash @etcd, path
-      rescue
-        {}
-      end
+      etcd2hash @etcd, path
+    rescue
+      {}
     end
 
     def members
-      Hash[ @etcd.members.map { |id, md| [ id, md.merge({ "ip" => md["clientURLs"].first.sub(/https?:\/\//, '').sub(/:[0-9]+/, '') }) ] } ]
+      Hash[ @etcd.members.map { |id, md| [ id, md.merge({ 'ip' => md['clientURLs'].first.sub(/https?:\/\//, '').sub(/:[0-9]+/, '') }) ] } ]
     end
 
   end

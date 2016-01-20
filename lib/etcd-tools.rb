@@ -1,8 +1,6 @@
+require 'etcd-tools/mixins'
+
 module EtcdTools
   module Cli
   end
-
-  module Watchdog
-  end
-
 end
