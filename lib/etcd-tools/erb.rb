@@ -25,20 +25,20 @@ module EtcdTools
     end
 
     def value path
-      @etcd.get('/' + path.sub(/^\//, '')).value
+      @etcd.get('/' + path.sub(%r{^/+}, '')).value
     end
 
     def keys path
-      path.sub!(/^\//, '')
+      path.sub!(%r{^/+}, '')
       if @etcd.get('/' + path).directory?
-        return @etcd.get('/' + path).children.map { |key| key.key }
+        return @etcd.get('/' + path).children.map(&:key)
       else
         return []
       end
     end
 
     def hash path
-      etcd2hash @etcd, path
+      @etcd.get_hash path
     rescue
       {}
     end

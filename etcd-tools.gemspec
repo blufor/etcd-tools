@@ -1,9 +1,9 @@
 Gem::Specification.new do |s|
   s.name                  = 'etcd-tools'
-  s.version               = '0.3.0'
+  s.version               = '0.4.0'
   s.date                  = Time.now.strftime('%Y-%m-%d')
   s.summary               = "ETCD tools"
-  s.description           = "A set of handful command-line utils for ETCD"
+  s.description           = "A set of handful command-line utils for ETCD + lib extensions"
   s.authors               = ["Radek 'blufor' Slavicinsky"]
   s.email                 = 'radek.slavicinsky@gmail.com'
   s.files                 = Dir['lib/**/*.rb']

@@ -11,7 +11,7 @@ module EtcdTools
         @options = Hash.new
 
         @options[:url] = ENV['ETCDCTL_ENDPOINT']
-        @options[:url] ||= "http://127.0.0.1:4001"
+        @options[:url] ||= "http://127.0.0.1:2379"
         @options[:root_path] = "/config"
 
         OptionParser.new do |opts|
@@ -25,9 +25,6 @@ module EtcdTools
           opts.separator "Common options:"
           opts.on("-r", "--root-path PATH", "root PATH of ETCD tree to inject the data [DEFAULT: /config]") do |param|
             @options[:root_path] = param
-          end
-          opts.on("-v", "--verbose", "run verbosely") do |param|
-            @options[:verbose] = param
           end
           opts.on_tail("-h", "--help", "show usage") do |param|
             puts opts;
@@ -49,20 +46,19 @@ module EtcdTools
 
         begin
           @etcd = etcd_connect @options[:url]
-        rescue Exception => e
-          $stderr.puts "Failed to connect to ETCD!"
-          $stderr.puts e.message
+        rescue EtcdTools::ClusterConnectError
+          $stderr.puts "Failed to connect to ETCD cluster"
           exit! 1
         end
 
         begin
-          hash2etcd @etcd, @hash, @options[:root_path]
-          puts "OK"
+          @etcd.set_hash(@hash, @options[:root_path])
         rescue Exception => e
           $stderr.puts "Import failed"
           $stderr.puts e.message
           exit! 1
         end
+        puts "OK"
       end
 
     end

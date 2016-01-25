@@ -1,3 +1,4 @@
+require 'etcd'
 require 'etcd-tools/mixins'
 
 module EtcdTools
