@@ -72,6 +72,8 @@ module Etcd
         etcd_key = path + '/' + key.to_s
         if value.class == Hash
           set_hash(value, etcd_key)
+        elsif value.class == Array
+          set(etcd_key, value: value.to_json)
         else
           set(etcd_key, value: value)
         end
@@ -86,12 +88,14 @@ module Etcd
         if get(child.key).directory?
           h[child.key.split('/').last.to_s] = get_hash child.key
         else
-          h[child.key.split('/').last.to_s] = child.value
+          value = JSON.parse(child.value) rescue value = child.value
+          h[child.key.split('/').last.to_s] = value
         end
       end
       return Hash[h.sort]
     rescue Exception => e
       raise e
+      puts e.backtrace
     end
 
     def members
