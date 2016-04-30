@@ -51,11 +51,17 @@ module Etcd
           Log.debug("Response body: #{res.body}")
           return process_http_request(res)
         rescue Timeout::Error
-          Log.debug("Timeout")
+          Log.debug("Connection timed out on #{member[:host]}:#{member[:host]}")
+          next
+        rescue Errno::ECONNRESET
+          Log.debug("Connection reset on #{member[:host]}:#{member[:host]}")
+          next
+        rescue Errno::ECONNREFUSED
+          Log.debug("Connection refused on #{member[:host]}:#{member[:host]}")
           next
         end
-        fail
       end
+      fail "Couldn't connect to the ETCDcluster"
     end
 
     def build_http_object(host, port, options={})
