@@ -2,8 +2,6 @@ require 'etcd'
 require 'etcd-tools/mixins'
 
 module EtcdTools
-  class ClusterConnectError < Exception
-  end
 
   module Etcd
     def etcd_connect(url, timeout = 2)
@@ -14,7 +12,7 @@ module EtcdTools
         next unless etcd.healthy?
         return etcd
       end
-      raise EtcdTools::ClusterConnectError
+      raise Etcd::ClusterConnectError
     end
   end
 end

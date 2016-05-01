@@ -2,6 +2,9 @@ require 'etcd'
 require 'etcd/client'
 
 module Etcd
+  class ClusterConnectError < RuntimeError
+  end
+
   class Client
 
     attr_reader :cluster
@@ -42,6 +45,7 @@ module Etcd
     end
 
     def cluster_http_request(req, options={})
+      errs = []
       cluster.each do |member|
         http = build_http_object(member[:host], member[:port], options)
         begin
@@ -50,18 +54,21 @@ module Etcd
           Log.debug("Response code: #{res.code}")
           Log.debug("Response body: #{res.body}")
           return process_http_request(res)
-        rescue Timeout::Error
+        rescue Timeout::Error => e
           Log.debug("Connection timed out on #{member[:host]}:#{member[:host]}")
+          errs << e
           next
-        rescue Errno::ECONNRESET
+        rescue Errno::ECONNRESET => e
           Log.debug("Connection reset on #{member[:host]}:#{member[:host]}")
+          errs << e
           next
-        rescue Errno::ECONNREFUSED
+        rescue Errno::ECONNREFUSED => e
           Log.debug("Connection refused on #{member[:host]}:#{member[:host]}")
+          errs << e
           next
         end
       end
-      fail "Couldn't connect to the ETCDcluster"
+      fail(Etcd::ClusterConnectError, "Couldn't connect to the ETCD cluster: #{errs.map(&:class).map(&:to_s)}")
     end
 
     def build_http_object(host, port, options={})

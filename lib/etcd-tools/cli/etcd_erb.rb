@@ -34,7 +34,7 @@ module EtcdTools
 
         begin
           @etcd = etcd_connect @options[:url]
-        rescue EtcdTools::ClusterConnectError
+        rescue Etcd::ClusterConnectError
           $stderr.puts "Failed to connect to ETCD cluster"
           exit! 1
         end
