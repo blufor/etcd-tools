@@ -5,8 +5,7 @@ module EtcdTools
 
   module Etcd
     def etcd_connect(url, timeout = 2)
-      url = url.split(',')
-      url.each do |u|
+      url.split(',').each do |u|
         (host, port) = u.gsub(/^https?:\/\//, '').gsub(/\/$/, '').split(':')
         etcd = ::Etcd.client(host: host, port: port, read_timeout: timeout)
         next unless etcd.healthy?
