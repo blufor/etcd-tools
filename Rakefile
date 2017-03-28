@@ -10,7 +10,7 @@ end
 
 desc 'Install local gem'
 task :install do
-  sh 'gem install etcd-tools-*.gem'
+  sh 'gem install etcd-tools-*.gem --no-rdoc --no-ri'
 end
 
 desc 'Clean build gems'

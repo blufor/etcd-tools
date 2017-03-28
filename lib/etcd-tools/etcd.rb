@@ -11,7 +11,7 @@ module EtcdTools
         next unless etcd.healthy?
         return etcd
       end
-      raise Etcd::ClusterConnectError
+      raise ::Etcd::ClusterConnectError
     end
   end
 end

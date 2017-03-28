@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name                  = 'etcd-tools'
-  s.version               = '0.4.4'
+  s.version               = '0.4.5'
   s.date                  = Time.now.strftime('%Y-%m-%d')
   s.summary               = "ETCD tools"
   s.description           = "A set of handful command-line utils for ETCD + lib extensions"

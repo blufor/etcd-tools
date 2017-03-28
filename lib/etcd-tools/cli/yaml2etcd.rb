@@ -12,7 +12,7 @@ module EtcdTools
 
         @options[:url] = ENV['ETCDCTL_ENDPOINT']
         @options[:url] ||= "http://127.0.0.1:2379"
-        @options[:root_path] = "/config"
+        @options[:root_path] = "/"
 
         OptionParser.new do |opts|
           opts.banner = "Reads YAML file and imports the data into ETCD\n\nUsage: #{$0} [OPTIONS] < config.yaml"
@@ -23,7 +23,7 @@ module EtcdTools
           end
           opts.separator ""
           opts.separator "Common options:"
-          opts.on("-r", "--root-path PATH", "root PATH of ETCD tree to inject the data [DEFAULT: /config]") do |param|
+          opts.on("-r", "--root-path PATH", "root PATH of ETCD tree to inject the data [DEFAULT: /]") do |param|
             @options[:root_path] = param
           end
           opts.on_tail("-h", "--help", "show usage") do |param|
